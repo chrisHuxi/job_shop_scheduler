@@ -45,6 +45,13 @@ class Schedule:
     def __repr__(self):
         return self.scheduleDict.__repr__()
 
+    def make_span(self):
+        return max(
+            max(x.end for x in timespan_list)
+            for machine, timespan_list in self.scheduleDict.items()
+        )
+            
+
 class TimeSpanList:
     def __init__(self,*timespans: TimeSpan):
         # deque is a python list-like data structure which is much more performant on inserting elements at the front
@@ -144,13 +151,6 @@ class TopologicalSort:
             machine_idx: time_span_list.get_machine_timespans(machine_idx) for machine_idx in range(0, self.machine_number)
         })
 
-
-    #variable:
-    #job
-    #index
-    #machine
-    #time
-    
 # each row is job
 # each colum is machine : time
 def readData(file_name) -> List[Operation]:
