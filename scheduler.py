@@ -45,7 +45,7 @@ class Schedule:
     def __repr__(self):
         return self.scheduleDict.__repr__()
 
-    def make_span(self):
+    def make_span(self) -> int:
         return max(
             max(x.end for x in timespan_list)
             for machine, timespan_list in self.scheduleDict.items()
@@ -71,6 +71,24 @@ class TimeSpanList:
         return [x for x in self.deque if x.get_machine() == machine]
 
 class TopologicalSort:
+
+    # each row is job
+    # each colum is (machine,time)
+    @staticmethod
+    def read_from_file(file_name):
+        with open('./data/'+file_name, 'r') as f:
+            lines = f.readlines()
+            job_number = int(lines[0].strip().split(' ')[0])
+            machine_number = int(lines[0].strip().split(' ')[1])
+            
+            operation_list = []
+            for i in range(0,len(lines[1:])):
+                time_list = lines[i+1].strip().split(' ')
+                for j in range(0,len(time_list),2):
+                    operation_list.append(Operation(i, int(j/2), int(time_list[j]), int(time_list[j+1])))
+        return TopologicalSort(machine_number, operation_list)
+
+
     def __init__(self, machine_number: int, opList: List[Operation]):
         self.opList = opList
         self.machine_number = machine_number
@@ -151,6 +169,29 @@ class TopologicalSort:
             machine_idx: time_span_list.get_machine_timespans(machine_idx) for machine_idx in range(0, self.machine_number)
         })
 
+    def make_span(self) -> int:
+        return self.get_schedule().make_span()
+
+class HillClimbingOptimizer():
+    @staticmethod
+    def next(ts: TopologicalSort) -> Optional[TopologicalSort]:
+        n = ts.neighborhood()
+        return min(
+            (x for x in n),
+            default=None,
+            key=lambda y: y.make_span()
+        )
+
+    @staticmethod
+    def optimize(ts: TopologicalSort):
+        current_ts = ts
+        while True:
+            next_ts = HillClimbingOptimizer.next(current_ts)
+            if not next_ts or next_ts.make_span() == current_ts.make_span():
+                return current_ts
+            else:
+                current_ts = next_ts
+
 # each row is job
 # each colum is machine : time
 def readData(file_name) -> List[Operation]:
@@ -211,9 +252,17 @@ def calculateTotalTime(machine_to_op_dict):
     
     
 def main():
-    initial_operation_list = readData('test_data1.txt')
-    new_operation_list = arrange(initial_operation_list)
-    evaluate(new_operation_list)
+    # initial_operation_list = readData('test_data1.txt')
+    # new_operation_list = arrange(initial_operation_list)
+    # evaluate(new_operation_list)
+
+    
+    ts = TopologicalSort.read_from_file('test_data1.txt')
+    print(ts)
+    print("Score: {}".format(ts.make_span()))
+    opt = HillClimbingOptimizer.optimize(ts)
+    print(opt)
+    print("Score: {}".format(opt.make_span()))
     
 if __name__ == "__main__":
     main()
