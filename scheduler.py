@@ -1,11 +1,12 @@
 from typing import List, Optional, Dict
+from collections import deque
 
 # =====Helper functions=============
-def head(list: list):
+def head(l: list):
     """
     Get first element of list. If list is empty return None
     """
-    return next(iter(list), None)
+    return None if len(l) == 0 else l[0]
 # ==================================
 
 class Operation:
@@ -14,6 +15,9 @@ class Operation:
         self.index = index
         self.machine = machine
         self.time = time
+
+    def __repr__(self):
+        return "<{};{};{}>".format(self.job, self.index, self.machine)
     
     def to_timespan(self, start: int):
         return TimeSpan(start, start + self.time, self)
@@ -41,36 +45,103 @@ class Schedule:
     def __repr__(self):
         return self.scheduleDict.__repr__()
 
+class TimeSpanList:
+    def __init__(self,*timespans: TimeSpan):
+        # deque is a python list-like data structure which is much more performant on inserting elements at the front
+        # See: https://docs.python.org/3.6/library/collections.html#collections.deque
+        self.deque = deque(timespans) 
+    
+    def append_timespan(self, ts: TimeSpan):
+        self.deque.appendleft(ts)
 
+    def get_previous_job_timespan(self, job: int) -> Optional[TimeSpan]: 
+        return head([x for x in self.deque if x.get_job() == job])
+
+    def get_previous_machine_timespan(self, machine: int) -> Optional[TimeSpan]: 
+        return head([x for x in self.deque if x.get_machine() == machine])
+
+    def get_machine_timespans(self, machine: int) -> List[TimeSpan]:
+        return [x for x in self.deque if x.get_machine() == machine]
 
 class TopologicalSort:
     def __init__(self, machine_number: int, opList: List[Operation]):
         self.opList = opList
         self.machine_number = machine_number
 
+    def __repr__(self):
+        return self.opList.__repr__()
+
+    def __len__(self):
+        return len(self.opList)
+
+    def find_index_prev_job_op(self, job: int, current_index: int) -> int:
+        for i,x in enumerate(self.opList):
+            if x.job is job and x.index is current_index-1:
+                return i
+        return -1
+
+    def find_index_next_job_op(self, job: int, current_index: int) -> int:
+        for i,x in enumerate(self.opList):
+            if x.job is job and x.index is current_index+1:
+                return i
+        return len(self.opList)+1
+
+    def is_valid_swop(self, idx1: int, idx2: int) -> bool:
+        op1 = self.opList[idx1]
+        op2 = self.opList[idx2]
+
+        prev_job_op1_idx = self.find_index_prev_job_op(op1.job, op1.index)
+        next_job_op1_idx = self.find_index_next_job_op(op1.job, op1.index)
+        
+        prev_job_op2_idx = self.find_index_prev_job_op(op2.job, op2.index)
+        next_job_op2_idx = self.find_index_next_job_op(op2.job, op2.index)
+
+        return idx1 != idx2 and \
+            idx2 > prev_job_op1_idx and idx2 < next_job_op1_idx and \
+                idx1 > prev_job_op2_idx and idx1 < next_job_op2_idx
+
+    def swop(self, idx1: int, idx2: int):
+        newOpList = self.opList.copy()
+        h = newOpList[idx1]
+        newOpList[idx1] = newOpList[idx2]
+        newOpList[idx2] = h
+        return TopologicalSort(self.machine_number, newOpList)
+
+    def neighborhood(self):
+        swops = [
+            (i,j)
+            for i in range(len(self))
+            for j in range(len(self))
+            if i < j
+        ]
+
+        return [
+            self.swop(i,j)
+            for i,j in swops
+            if self.is_valid_swop(i,j)
+        ]
+
     def get_schedule(self):
         #adding all new elements at start
-        time_span_list: List[TimeSpan] = []
+        time_span_list = TimeSpanList()
 
-        for curr_op in self.opList:
-
+        for current_op in self.opList:
             # Optional[TimeSpan]-type: varable can be of type TimeSpan or None
            
             # Searching for endpoints of the timeslots of previous job operation and previous machine operation
-            prev_machine_timeslot: Optional[TimeSpan] = head([x for x in time_span_list if x.get_machine() == curr_op.machine])
+            prev_machine_timeslot = time_span_list.get_previous_machine_timespan(current_op.machine)
             prev_machine_end = prev_machine_timeslot.end if prev_machine_timeslot else 0
 
-            prev_job_timeslot: Optional[TimeSpan] = head([x for x in time_span_list if x.get_job() == curr_op.job])
+            prev_job_timeslot = time_span_list.get_previous_job_timespan(current_op.job)
             prev_job_end = prev_job_timeslot.end if prev_job_timeslot else 0
 
             # Compute according timespan to the current operation
-            curr_timespan = curr_op.to_timespan(max(prev_job_end, prev_machine_end))
-            # Add timespan to the left side of the list
-            time_span_list.insert(0, curr_timespan)
+            current_timespan = current_op.to_timespan(max(prev_job_end, prev_machine_end))
+            # Add timespan to the list
+            time_span_list.append_timespan(current_timespan)
 
-        time_span_list.reverse()
         return Schedule({
-            machine_idx: [x for x in time_span_list if x.get_machine() == machine_idx] for machine_idx in range(0, self.machine_number)
+            machine_idx: time_span_list.get_machine_timespans(machine_idx) for machine_idx in range(0, self.machine_number)
         })
 
 
