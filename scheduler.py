@@ -1,14 +1,79 @@
-#example:
-# M1[ O11, O22 ]
-# M2[ O21, O12 ]
+from typing import List, Optional, Dict
 
+# =====Helper functions=============
+def head(list: list):
+    """
+    Get first element of list. If list is empty return None
+    """
+    return next(iter(list), None)
+# ==================================
 
 class Operation:
-    def __init__(self, job, index, machine, time): 
+    def __init__(self, job: int, index: int, machine: int, time: int): 
         self.job = job
         self.index = index
         self.machine = machine
         self.time = time
+    
+    def to_timespan(self, start: int):
+        return TimeSpan(start, start + self.time, self)
+
+
+class TimeSpan:
+    def __init__(self, start: int, end: int, operation: Operation):
+        self.start = start
+        self.end = end
+        self.operation = operation
+
+    def get_machine(self) -> int:
+        return self.operation.machine
+
+    def get_job(self) -> int:
+        return self.operation.job
+
+    def __repr__(self):
+        return (self.start, self.end).__repr__()
+
+class Schedule:
+    def __init__(self, scheduleDict: Dict[int,List[TimeSpan]]):
+        self.scheduleDict = scheduleDict
+
+    def __repr__(self):
+        return self.scheduleDict.__repr__()
+
+
+
+class TopologicalSort:
+    def __init__(self, machine_number: int, opList: List[Operation]):
+        self.opList = opList
+        self.machine_number = machine_number
+
+    def get_schedule(self):
+        #adding all new elements at start
+        time_span_list: List[TimeSpan] = []
+
+        for curr_op in self.opList:
+
+            # Optional[TimeSpan]-type: varable can be of type TimeSpan or None
+           
+            # Searching for endpoints of the timeslots of previous job operation and previous machine operation
+            prev_machine_timeslot: Optional[TimeSpan] = head([x for x in time_span_list if x.get_machine() == curr_op.machine])
+            prev_machine_end = prev_machine_timeslot.end if prev_machine_timeslot else 0
+
+            prev_job_timeslot: Optional[TimeSpan] = head([x for x in time_span_list if x.get_job() == curr_op.job])
+            prev_job_end = prev_job_timeslot.end if prev_job_timeslot else 0
+
+            # Compute according timespan to the current operation
+            curr_timespan = curr_op.to_timespan(max(prev_job_end, prev_machine_end))
+            # Add timespan to the left side of the list
+            time_span_list.insert(0, curr_timespan)
+
+        time_span_list.reverse()
+        return Schedule({
+            machine_idx: [x for x in time_span_list if x.get_machine() == machine_idx] for machine_idx in range(0, self.machine_number)
+        })
+
+
     #variable:
     #job
     #index
@@ -17,7 +82,7 @@ class Operation:
     
 # each row is job
 # each colum is machine : time
-def readData(file_name):
+def readData(file_name) -> List[Operation]:
     with open('./data/'+file_name, 'r') as f:
         
         lines = f.readlines()
@@ -81,3 +146,11 @@ def main():
     
 if __name__ == "__main__":
     main()
+
+
+example_topSort = TopologicalSort(2,[
+    Operation(0,0,0,80),
+    Operation(0,1,1,60),
+    Operation(1,0,0,50),
+    Operation(1,1,1,100),
+])
