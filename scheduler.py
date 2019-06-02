@@ -4,7 +4,7 @@
 
 
 class Operation:
-    def __init__(self, job, index, machine, time): #index and machine seems to be the same
+    def __init__(self, job, index, machine, time): 
         self.job = job
         self.index = index
         self.machine = machine
@@ -13,6 +13,7 @@ class Operation:
     #job
     #index
     #machine
+    #time
     
 # each row is job
 # each colum is machine : time
@@ -20,7 +21,6 @@ def readData(file_name):
     with open('./data/'+file_name, 'r') as f:
         
         lines = f.readlines()
-        print(lines[0].strip().split(' '))
         job_number = int(lines[0].strip().split(' ')[0])
         machine_number = int(lines[0].strip().split(' ')[1])
         
@@ -29,10 +29,6 @@ def readData(file_name):
             time_list = lines[i+1].strip().split(' ')
             for j in range(0,len(time_list),2):
                 operation_list.append(Operation(i, int(j/2), int(time_list[j]), int(time_list[j+1])))
-        #for o in operation_list:
-        #    print(o.time)
-        #    pass
-        #print(len(operation_list))
     return operation_list
         
     
@@ -41,11 +37,19 @@ def arrange(operation_list):
     
     return operation_list
     
+    
 def evaluate(operation_list):
     legal_flag = False
     #TODO:
     #firstly check if this list legal or not
     # but how? ==> main idea: if there is no circle: legal
+    # is there a tool or algorithm to check circle?
+    for i in range(len(operation_list)):
+        op1 = operation_list[i]
+        if i < len(operation_list) - 1:
+            op2 = operation_list[i+1]
+        
+    
     
     
     if legal_flag == True:
@@ -75,5 +79,5 @@ def main():
     new_operation_list = arrange(initial_operation_list)
     evaluate(new_operation_list)
     
-    
-main()
+if __name__ == "__main__":
+    main()
