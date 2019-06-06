@@ -39,7 +39,7 @@ class TimeSpan:
         return self.operation.job
 
     def __repr__(self):
-        return (self.start, self.end).__repr__()
+        return "({}, {}, {}:{})".format(self.start, self.end, self.operation.job, self.operation.index)
 
 class Schedule:
     def __init__(self, scheduleDict: Dict[int,List[TimeSpan]]):
@@ -54,6 +54,9 @@ class Schedule:
             for machine, timespan_list in self.scheduleDict.items()
         )
             
+    def log(self):
+        for key, value in self.scheduleDict.items():
+            print("{}: {}".format(key,value))
 
 class TimeSpanList:
     def __init__(self,*timespans: TimeSpan):
@@ -190,7 +193,8 @@ class HillClimbingOptimizer():
         current_ts = ts
         while True:
             next_ts = HillClimbingOptimizer.next(current_ts)
-            if not next_ts or next_ts.make_span() == current_ts.make_span():
+            # Stop routine if there is no neighbor or if neighbor is worse then current schedule/topologicalSort
+            if (next_ts == None) or next_ts.make_span() >= current_ts.make_span():
                 return current_ts
             else:
                 current_ts = next_ts
@@ -257,11 +261,11 @@ def main():
     
     ts = TopologicalSort.read_from_file('test_data1.txt')
     #print(ts.opList)
-    print(ts.get_schedule())
     #print(ts.get_schedule().scheduleDict)
     #print(ts.make_span())
     test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span())
     test_v.plot()
+    print(ts.get_schedule().log())
     #print("Score: {}".format(ts.make_span()))
     #opt = HillClimbingOptimizer.optimize(ts)
     #print(opt)
