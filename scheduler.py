@@ -224,7 +224,7 @@ class HillClimbingOptimizer():
             else:
                 current_ts = next_ts
 
-class SimulatedAnealingOptimizer:
+class SimulatedAnnealingOptimizer:
     def __init__(
         self,
         T: float,
@@ -361,7 +361,7 @@ def main():
 
 
     print("Score: {}".format(ts.make_span()))
-    opt = SimulatedAnealingOptimizer(3000, ts, 1500, shuffleing=2500, cooling_rate=0.99).optimize()
+    opt = SimulatedAnnealingOptimizer(3000, ts, 1500, shuffleing=2500, cooling_rate=0.99).optimize()
     print("Score: {}".format(opt.make_span()))
     Visualizator(opt.get_schedule().scheduleDict, opt.make_span()).plot()
     
