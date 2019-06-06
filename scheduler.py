@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict
 from collections import deque
-
+from random import randint, random
+from math import exp
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -152,6 +153,30 @@ class TopologicalSort:
             if self.is_valid_swop(i,j)
         ]
 
+    def random_neighbor_really_slow(self):
+        n = self.neighborhood()
+        return n[randint(0,len(n)-1)]
+
+    def random_neighbor_slow(self):
+        valid_swops = [
+            (i,j)
+            for i in range(len(self))
+            for j in range(len(self))
+            if i < j
+            if self.is_valid_swop(i,j)
+        ]
+
+        swop = valid_swops[randint(0,len(valid_swops)-1)]
+        return self.swop(swop[0], swop[1])
+
+    # Faster implementation to pick a random neighbor
+    def random_neighbor(self):
+        while True:
+            i = randint(0,len(self)-1)
+            j = randint(0,len(self)-1)
+            if self.is_valid_swop(i,j):
+                return self.swop(i, j)
+
     def get_schedule(self):
         #adding all new elements at start
         time_span_list = TimeSpanList()
@@ -198,6 +223,67 @@ class HillClimbingOptimizer():
                 return current_ts
             else:
                 current_ts = next_ts
+
+class SimulatedAnealingOptimizer:
+    def __init__(
+        self,
+        T: float,
+        ts: TopologicalSort,
+        maxSteps: int,
+        shuffleing: int = 333,
+        logging: bool = True,
+        cooling_rate: float = 0.95
+    ):
+        self.step = 0
+        self.T = T
+        self.currentTS = ts
+        self.currentMakeSpan = ts.make_span()
+        self.max_steps = maxSteps
+        self.shuffleing = shuffleing
+        self.logging = logging
+        self.cooling_rate = cooling_rate
+
+    def log(self, label: str):
+        """
+        The logging will have the following formt:
+        [<label>] <makeSpan> <temperature>
+        """
+        if self.logging:
+            print(label, self.currentMakeSpan, self.T)
+
+    def shuffle(self, steps: int):
+        """
+        Creates a random topological sort by applying random swops
+        """
+        for i in range(0,steps):
+            self.currentTS = self.currentTS.random_neighbor()
+        self.currentMakeSpan = self.currentTS.make_span()
+        self.log("[shuffle]")
+
+    def next(self):
+        rn = self.currentTS.random_neighbor()
+        rn_makeSpan = rn.make_span()
+
+        if rn_makeSpan < self.currentMakeSpan:
+            self.currentTS = rn
+            self.currentMakeSpan = rn_makeSpan
+            self.log("[better]")
+        elif random() < exp( float(self.currentMakeSpan - rn_makeSpan) / self.T):
+            is_equal = self.currentMakeSpan == rn_makeSpan
+            
+            self.currentTS = rn
+            self.currentMakeSpan = rn_makeSpan
+            
+            self.log("[equal]" if is_equal else "[worse]")
+        
+        self.T *= self.cooling_rate
+        self.step += 1
+
+    def optimize(self):
+        self.shuffle(self.shuffleing)
+        while self.step <= self.max_steps:
+            self.next()
+        return self.currentTS
 
     
 class Visualizator():
@@ -258,18 +344,26 @@ class Visualizator():
         
     
 def main():
-    
     ts = TopologicalSort.read_from_file('test_data1.txt')
+
     #print(ts.opList)
     #print(ts.get_schedule().scheduleDict)
     #print(ts.make_span())
-    test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span())
-    test_v.plot()
-    print(ts.get_schedule().log())
+
+    # test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span())
+    # test_v.plot()
+    # print(ts.get_schedule().log())
+    
     #print("Score: {}".format(ts.make_span()))
     #opt = HillClimbingOptimizer.optimize(ts)
     #print(opt)
     #print("Score: {}".format(opt.make_span()))
+
+
+    print("Score: {}".format(ts.make_span()))
+    opt = SimulatedAnealingOptimizer(3000, ts, 1500, shuffleing=2500, cooling_rate=0.99).optimize()
+    print("Score: {}".format(opt.make_span()))
+    Visualizator(opt.get_schedule().scheduleDict, opt.make_span()).plot()
     
 if __name__ == "__main__":
     main()
