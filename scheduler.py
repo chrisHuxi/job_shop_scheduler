@@ -5,6 +5,8 @@ from math import exp
 import matplotlib.pyplot as plt
 import numpy as np
 
+import sys
+
 # =====Helper functions=============
 def head(l: list):
     """
@@ -231,8 +233,10 @@ class SimulatedAnnealingOptimizer:
         ts: TopologicalSort,
         maxSteps: int,
         shuffleing: int = 333,
-        logging: bool = True,
+        logging: str = "progress",
+        colored_log = True,
         cooling_rate: float = 0.95
+
     ):
         self.step = 0
         self.T = T
@@ -240,16 +244,54 @@ class SimulatedAnnealingOptimizer:
         self.currentMakeSpan = ts.make_span()
         self.max_steps = maxSteps
         self.shuffleing = shuffleing
-        self.logging = logging
+        
         self.cooling_rate = cooling_rate
+        self.colored_log = colored_log
 
-    def log(self, label: str):
+        if logging == "none":
+            self.logging = 0
+        elif logging == "progress":
+            self.logging = 1
+        elif logging == "verbose":
+            self.logging = 2
+        else:
+            raise Exception("Unknown logging flag:", logging)
+
+    # ==============Logging===================
+
+    def log_colorful(self, label: str, color_code: str):
         """
         The logging will have the following formt:
-        [<label>] <makeSpan> <temperature>
+        <label> <makeSpan> <temperature>
         """
-        if self.logging:
-            print(label, self.currentMakeSpan, self.T)
+        if self.logging == 2:
+            if self.colored_log:
+                print("\r" + color_code + label, self.currentMakeSpan, self.T, " " * 100, "\033[0m")
+            else:
+                print("\r" + label, self.currentMakeSpan, self.T, " " * 100)
+
+    def log_red(self, label: str):
+        self.log_colorful(label, "\033[31m")
+
+    def log_green(self, label: str):
+        self.log_colorful(label, "\033[32m")
+
+    def log_yellow(self, label: str):
+        self.log_colorful(label, "\033[33m")
+    
+    def log(self, label):
+        self.log_colorful(label, "\033[0m")
+
+    def print_progress_bar(self):
+        if self.logging >= 1 and \
+            (self.step % int(self.max_steps/100) == 0): # Only redraw progressbar if its necessary => faster!
+
+            progress = int(100.0*self.step / self.max_steps)
+            print(
+                "\r[{}>{}] {}".format('=' * progress, ' ' * (100-progress), self.currentMakeSpan),
+                end="              ") # end <-- padding if currentMakeSpan gets shorter
+
+    # ========================================
 
     def shuffle(self, steps: int):
         """
@@ -264,17 +306,20 @@ class SimulatedAnnealingOptimizer:
         rn = self.currentTS.random_neighbor()
         rn_makeSpan = rn.make_span()
 
-        if rn_makeSpan < self.currentMakeSpan:
-            self.currentTS = rn
-            self.currentMakeSpan = rn_makeSpan
-            self.log("[better]")
-        elif random() < exp( float(self.currentMakeSpan - rn_makeSpan) / self.T):
+        if rn_makeSpan <= self.currentMakeSpan:
             is_equal = self.currentMakeSpan == rn_makeSpan
-            
             self.currentTS = rn
             self.currentMakeSpan = rn_makeSpan
-            
-            self.log("[equal]" if is_equal else "[worse]")
+            if is_equal:
+                self.log("[equal]   ")
+            else:
+                self.log_green("[better]  ")
+        elif random() < exp( float(self.currentMakeSpan - rn_makeSpan) / self.T):
+            self.currentTS = rn
+            self.currentMakeSpan = rn_makeSpan
+            self.log_red("[worse]   ")
+        else:
+            self.log_yellow("[rejected]")
         
         self.T *= self.cooling_rate
         self.step += 1
@@ -283,7 +328,13 @@ class SimulatedAnnealingOptimizer:
         self.shuffle(self.shuffleing)
         while self.step <= self.max_steps:
             self.next()
+            self.print_progress_bar()
+        
+        if self.logging >= 1: # Add linebreak after finishing
+            print("")
+        
         return self.currentTS
+
 
     
 class Visualizator():
@@ -361,9 +412,9 @@ def main():
 
 
     print("Score: {}".format(ts.make_span()))
-    opt = SimulatedAnnealingOptimizer(3000, ts, 1500, shuffleing=2500, cooling_rate=0.99).optimize()
+    opt = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
     print("Score: {}".format(opt.make_span()))
-    Visualizator(opt.get_schedule().scheduleDict, opt.make_span()).plot()
+    # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
     
 if __name__ == "__main__":
     main()
