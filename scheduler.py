@@ -366,26 +366,43 @@ class Visualizator():
             y2 = y1+1
             current_span_len = 0
             current_job_idx = -1
-            empty_flag = True
+            #empty_flag = True
+            last_col = -1
             x_start = 0
             for x, col in enumerate(row):
-                if (col == -1) and (current_span_len == 0): 
-                    empty_flag = True
+                #if (col == -1) and (current_span_len == 0): 
+                if(col == -1) and (last_col == -1): #持续没东西
+                    #empty_flag = True
+                    last_col = col
                     continue
-                elif col != -1:
-                    if empty_flag == True: # 上边缘
-                        x_start = x
-                        empty_flag = False
-                        current_job_idx = col
-                    else:                    
-                        current_span_len += 1
-                elif (col == -1) and (current_span_len!=0): #下边缘
+                elif (last_col == -1) and (last_col != col): #上边缘
+                    x_start = x
+                    current_job_idx = col
+                    current_span_len =0 
+                    last_col = col
+                elif (last_col != -1) and (last_col == col): #持续有东西
+                    current_span_len += 1
+                    last_col = col
+                elif (last_col != -1) and (col != -1) and (last_col != col): #一个schedule的上边缘 另一个的下边缘
                     x1 = np.array([x_start, (x_start + current_span_len)])
                     plt.fill_between(x1, y1, y2, color=( current_job_idx/10.0, 0.5, 0.8))
-                    plt.text(self.avg(x1[0], x1[1]), self.avg(y1[0], y2[0]), "job" + str(current_job_idx), 
+                    plt.text(self.avg(x1[0], x1[1]), self.avg(y1[0], y2[0]), str(current_job_idx), 
                                                     horizontalalignment='center',
                                                     verticalalignment='center')
                     current_span_len = 0
+                    
+                    x_start = x
+                    current_job_idx = col
+                    current_span_len =0 
+                    last_col = col
+                elif (col == -1) and (last_col != col): #下边缘
+                    x1 = np.array([x_start, (x_start + current_span_len)])
+                    plt.fill_between(x1, y1, y2, color=( current_job_idx/10.0, 0.5, 0.8))
+                    plt.text(self.avg(x1[0], x1[1]), self.avg(y1[0], y2[0]), str(current_job_idx), 
+                                                    horizontalalignment='center',
+                                                    verticalalignment='center')
+                    current_span_len = 0
+                    last_col = col
                 else:
                     print("---------------------")
         plt.ylim(10,0)
@@ -401,8 +418,8 @@ def main():
     #print(ts.get_schedule().scheduleDict)
     #print(ts.make_span())
 
-    # test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span())
-    # test_v.plot()
+    test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span())
+    test_v.plot()
     # print(ts.get_schedule().log())
     
     #print("Score: {}".format(ts.make_span()))
@@ -411,9 +428,9 @@ def main():
     #print("Score: {}".format(opt.make_span()))
 
 
-    print("Score: {}".format(ts.make_span()))
-    opt = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
-    print("Score: {}".format(opt.make_span()))
+    #print("Score: {}".format(ts.make_span()))
+    #opt = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
+    #print("Score: {}".format(opt.make_span()))
     # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
     
 if __name__ == "__main__":
