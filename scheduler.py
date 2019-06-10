@@ -5,6 +5,12 @@ from math import exp
 import matplotlib.pyplot as plt
 import numpy as np
 
+from matplotlib.widgets import Button,RadioButtons
+import os
+import pickle
+
+import glob
+
 import sys
 
 # =====Helper functions=============
@@ -283,9 +289,11 @@ class SimulatedAnnealingOptimizer:
         self.log_colorful(label, "\033[0m")
 
     def print_progress_bar(self):
+
         if self.logging >= 1 and \
             (self.step % int(self.max_steps/100) == 0): # Only redraw progressbar if its necessary => faster!
-
+            test_v = Visualizator(currentTS.get_schedule().scheduleDict, currentTS.make_span())
+            test_v.plot()
             progress = int(100.0*self.step / self.max_steps)
             print(
                 "\r[{}>{}] {}".format('=' * progress, ' ' * (100-progress), self.currentMakeSpan),
@@ -338,9 +346,10 @@ class SimulatedAnnealingOptimizer:
 
     
 class Visualizator():
-    def __init__(self, scheduleDict, total_time):
+    def __init__(self, scheduleDict, total_time, iteration_index):
         self.scheduleDict = scheduleDict
         self.total_time = total_time
+        self.iteration_index = iteration_index
         
     def avg(self, a, b):
         return (a + b) / 2.0
@@ -355,9 +364,10 @@ class Visualizator():
                 for i in range(span.start,span.end):
                     time_line[i] = span.operation.job
             plot_list.append(time_line)
-        print(plot_list[4])
-        fig = plt.figure(figsize=(20, 6))
+        #print(plot_list[4])
+        fig = plt.figure(figsize=(18, 6))
         ax = fig.add_subplot(111)
+        plt.subplots_adjust(left = 0.1, bottom = 0.2)
         ax.axes.get_yaxis().set_visible(False)
         #ax.set_aspect(1)
         
@@ -408,8 +418,43 @@ class Visualizator():
         plt.ylim(10,0)
         plt.xlim(0,self.total_time)
         
-        plt.show()
+        #next_plot_button_axe = plt.axes([0.5,0.05,0.08,0.05]) #left, bottom, width, height
+        #next_plot_button = Button(ax = next_plot_button_axe, label = "next iteration")
         
+        plt.savefig("./image/"+str(self.iteration_index)+".png")
+        #pickle.dump(ax, open("./image/"+str(self.iteration_index) + ".pickle",'wb'))
+        #plt.show()
+
+class ButtonDisplayer:
+    def __init__(self, dir_name):
+        self.dir_name = dir_name
+        self.image_list = glob.glob(dir_name+"/*.png")
+        self.index = 0
+        self.fig =  plt.figure(figsize=(18, 6))
+        
+        self.image_axes = plt.axes([0.0, 0.0, 1.0, 1.0])
+        self.button_axes = plt.axes([0.5,0.05,0.08,0.05])
+
+    def click_button(self,event):
+        if(self.index >= len(self.image_list) - 1):
+            self.index = 0
+        else:
+            self.index += 1
+        current_image = plt.imread(self.image_list[self.index])
+        self.image_axes.imshow(current_image)
+        self.fig.canvas.draw_idle()
+        
+            
+    def display(self):
+        #plt.connect('button_press_event', self.click_button)
+        current_image = plt.imread(self.image_list[self.index])
+        self.image_axes.imshow(current_image)
+        self.button_axes = Button(ax = self.button_axes, label = "next iteration")
+        self.button_axes.on_clicked(self.click_button)
+        plt.show()
+
+
+
     
 def main():
     ts = TopologicalSort.read_from_file('test_data1.txt')
@@ -418,26 +463,26 @@ def main():
     #print(ts.get_schedule().scheduleDict)
     #print(ts.make_span())
 
-    test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span())
-    test_v.plot()
+    #test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span(), 1)
+    #test_v.plot()
+
     # print(ts.get_schedule().log())
     
     #print("Score: {}".format(ts.make_span()))
     #opt = HillClimbingOptimizer.optimize(ts)
     #print(opt)
     #print("Score: {}".format(opt.make_span()))
+    
+    #opt_v = Visualizator(opt.get_schedule().scheduleDict, opt.make_span(), 2)
+    #opt_v.plot()
+    
+    bp = ButtonDisplayer("./image")
+    bp.display()
 
-
-    #print("Score: {}".format(ts.make_span()))
-    #opt = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
-    #print("Score: {}".format(opt.make_span()))
+    print("Score: {}".format(ts.make_span()))
+    opt = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
+    print("Score: {}".format(opt.make_span()))
     # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
     
 if __name__ == "__main__":
     main()
-    example_topSort = TopologicalSort(2,[
-        Operation(0,0,0,80),
-        Operation(0,1,1,60),
-        Operation(1,0,0,50),
-        Operation(1,1,1,100),
-    ])
