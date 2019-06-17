@@ -292,8 +292,6 @@ class SimulatedAnnealingOptimizer:
 
         if self.logging >= 1 and \
             (self.step % int(self.max_steps/100) == 0): # Only redraw progressbar if its necessary => faster!
-            test_v = Visualizator(currentTS.get_schedule().scheduleDict, currentTS.make_span())
-            test_v.plot()
             progress = int(100.0*self.step / self.max_steps)
             print(
                 "\r[{}>{}] {}".format('=' * progress, ' ' * (100-progress), self.currentMakeSpan),
@@ -459,6 +457,8 @@ class ButtonDisplayer:
 def main():
     ts = TopologicalSort.read_from_file('test_data1.txt')
 
+    
+
     #print(ts.opList)
     #print(ts.get_schedule().scheduleDict)
     #print(ts.make_span())
@@ -475,13 +475,22 @@ def main():
     
     #opt_v = Visualizator(opt.get_schedule().scheduleDict, opt.make_span(), 2)
     #opt_v.plot()
+
+    test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span(), 0)
+    test_v.plot()
     
-    bp = ButtonDisplayer("./image")
-    bp.display()
 
     print("Score: {}".format(ts.make_span()))
     opt = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
     print("Score: {}".format(opt.make_span()))
+
+    test_v = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 1)
+    test_v.plot()
+    
+    bp = ButtonDisplayer("./image")
+    bp.display()
+
+
     # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
     
 if __name__ == "__main__":
