@@ -413,6 +413,7 @@ class Visualizator():
                     last_col = col
                 else:
                     print("---------------------")
+        
         plt.ylim(10,0)
         plt.xlim(0,self.total_time)
         
@@ -420,8 +421,10 @@ class Visualizator():
         #next_plot_button = Button(ax = next_plot_button_axe, label = "next iteration")
         
         plt.savefig("./image/"+str(self.iteration_index)+".png")
+        plt.close()
         #pickle.dump(ax, open("./image/"+str(self.iteration_index) + ".pickle",'wb'))
         #plt.show()
+        
 
 class ButtonDisplayer:
     def __init__(self, dir_name):
@@ -476,16 +479,16 @@ def main():
     #opt_v = Visualizator(opt.get_schedule().scheduleDict, opt.make_span(), 2)
     #opt_v.plot()
 
-    test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span(), 0)
-    test_v.plot()
+    test_v1 = Visualizator(ts.get_schedule().scheduleDict, ts.make_span(), 0)
+    test_v1.plot()
     
 
-    print("Score: {}".format(ts.make_span()))
+    #print("Score: {}".format(ts.make_span()))
     opt = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
     print("Score: {}".format(opt.make_span()))
 
-    test_v = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 1)
-    test_v.plot()
+    test_v2 = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 1)
+    test_v2.plot()
     
     bp = ButtonDisplayer("./image")
     bp.display()
