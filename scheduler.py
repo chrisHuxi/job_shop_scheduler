@@ -12,6 +12,7 @@ import pickle
 import glob
 
 import sys
+import re
 
 # =====Helper functions=============
 def head(l: list):
@@ -98,7 +99,8 @@ class TopologicalSort:
             
             operation_list = []
             for i in range(0,len(lines[1:])):
-                time_list = lines[i+1].strip().split(' ')
+                time_list = re.split(r'[\s]+',lines[i+1].strip())
+                print(time_list)
                 for j in range(0,len(time_list),2):
                     operation_list.append(Operation(i, int(j/2), int(time_list[j]), int(time_list[j+1])))
         return TopologicalSort(machine_number, operation_list)
@@ -363,12 +365,11 @@ class Visualizator():
                     time_line[i] = span.operation.job
             plot_list.append(time_line)
         #print(plot_list[4])
-        fig = plt.figure(figsize=(18, 6))
+        fig = plt.figure(figsize=(20, 8))
         ax = fig.add_subplot(111)
         plt.subplots_adjust(left = 0.1, bottom = 0.2)
         ax.axes.get_yaxis().set_visible(False)
         #ax.set_aspect(1)
-        
         for y, row in enumerate(plot_list):
             y1 = np.array([y, y])
             y2 = y1+1
@@ -393,7 +394,7 @@ class Visualizator():
                     last_col = col
                 elif (last_col != -1) and (col != -1) and (last_col != col): #一个schedule的上边缘 另一个的下边缘
                     x1 = np.array([x_start, (x_start + current_span_len)])
-                    plt.fill_between(x1, y1, y2, color=( current_job_idx/10.0, 0.5, 0.8))
+                    plt.fill_between(x1, y1, y2, color=( current_job_idx/20.0, 0.5, 0.8))
                     plt.text(self.avg(x1[0], x1[1]), self.avg(y1[0], y2[0]), str(current_job_idx), 
                                                     horizontalalignment='center',
                                                     verticalalignment='center')
@@ -405,7 +406,7 @@ class Visualizator():
                     last_col = col
                 elif (col == -1) and (last_col != col): #下边缘
                     x1 = np.array([x_start, (x_start + current_span_len)])
-                    plt.fill_between(x1, y1, y2, color=( current_job_idx/10.0, 0.5, 0.8))
+                    plt.fill_between(x1, y1, y2, color=( current_job_idx/20.0, 0.5, 0.8))
                     plt.text(self.avg(x1[0], x1[1]), self.avg(y1[0], y2[0]), str(current_job_idx), 
                                                     horizontalalignment='center',
                                                     verticalalignment='center')
@@ -414,7 +415,7 @@ class Visualizator():
                 else:
                     print("---------------------")
         
-        plt.ylim(10,0)
+        plt.ylim(len(plot_list),0)
         plt.xlim(0,self.total_time)
         
         #next_plot_button_axe = plt.axes([0.5,0.05,0.08,0.05]) #left, bottom, width, height
@@ -431,7 +432,7 @@ class ButtonDisplayer:
         self.dir_name = dir_name
         self.image_list = glob.glob(dir_name+"/*.png")
         self.index = 0
-        self.fig =  plt.figure(figsize=(18, 6))
+        self.fig =  plt.figure(figsize=(20, 8))
         
         self.image_axes = plt.axes([0.0, 0.0, 1.0, 1.0])
         self.button_axes = plt.axes([0.5,0.05,0.08,0.05])
@@ -457,11 +458,11 @@ class ButtonDisplayer:
 
 
     
-def main():
-    ts = TopologicalSort.read_from_file('test_data1.txt')
-
+def main(argv):
+    print("test file: " + argv[0])
+    #ts = TopologicalSort.read_from_file('test_data1.txt')
+    ts = TopologicalSort.read_from_file(argv[0])
     
-
     #print(ts.opList)
     #print(ts.get_schedule().scheduleDict)
     #print(ts.make_span())
@@ -497,4 +498,4 @@ def main():
     # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
     
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
