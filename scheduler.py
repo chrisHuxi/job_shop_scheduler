@@ -265,6 +265,8 @@ class SimulatedAnnealingOptimizer:
             raise Exception("Unknown logging flag:", logging)
 
         self.learning_curve = []
+        self.temperature_curve = []
+
 
     # ==============Logging===================
 
@@ -331,6 +333,7 @@ class SimulatedAnnealingOptimizer:
             self.log_yellow("[rejected]")
         
         self.learning_curve.append(self.currentMakeSpan)
+        self.temperature_curve.append(self.T)
         self.T *= self.cooling_rate
         self.step += 1
 
@@ -343,7 +346,7 @@ class SimulatedAnnealingOptimizer:
         if self.logging >= 1: # Add linebreak after finishing
             print("")
         
-        return (self.currentTS,self.learning_curve)
+        return (self.currentTS, self.learning_curve, self.temperature_curve)
 
 
     
@@ -487,7 +490,7 @@ def main(argv):
     
 
     #print("Score: {}".format(ts.make_span()))
-    opt, learning_curve = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
+    opt, learning_curve, temperature_curve = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
     print("Score: {}".format(opt.make_span()))
 
     test_v2 = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 1)
@@ -498,6 +501,7 @@ def main(argv):
 
     plt.figure()
     plt.plot(range(len(learning_curve)), learning_curve)
+    plt.plot(range(len(learning_curve)), temperature_curve)
     plt.show()
 
     # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
