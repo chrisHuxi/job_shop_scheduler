@@ -237,22 +237,22 @@ class HillClimbingOptimizer():
 class SimulatedAnnealingOptimizer:
     def __init__(
         self,
-        T: float,
+        init_T: float,
         ts: TopologicalSort,
         maxSteps: int,
         shuffleing: int = 333,
         logging: str = "progress",
         colored_log = True,
-        cooling_rate: float = 0.95
+        cooling_duration: float = 0.95
     ):
         self.step = 0
-        self.T = T
+        self.T = init_T
         self.currentTS = ts
         self.currentMakeSpan = ts.make_span()
         self.max_steps = maxSteps
         self.shuffleing = shuffleing
         
-        self.cooling_rate = cooling_rate
+        self.cooling_rate = init_T / (cooling_duration * maxSteps)
         self.colored_log = colored_log
 
         if logging == "none":
@@ -264,8 +264,8 @@ class SimulatedAnnealingOptimizer:
         else:
             raise Exception("Unknown logging flag:", logging)
 
-        self.learning_curve = []
-        self.temperature_curve = []
+        self.learning_curve: List[float] = []
+        self.temperature_curve: List[float] = []
 
 
     # ==============Logging===================
@@ -334,7 +334,7 @@ class SimulatedAnnealingOptimizer:
         
         self.learning_curve.append(self.currentMakeSpan)
         self.temperature_curve.append(self.T)
-        self.T *= self.cooling_rate
+        self.T = max(self.T - self.cooling_rate, 0.00000001)
         self.step += 1
 
     def optimize(self):
@@ -490,7 +490,7 @@ def main(argv):
     
 
     #print("Score: {}".format(ts.make_span()))
-    opt, learning_curve, temperature_curve = SimulatedAnnealingOptimizer(3000, ts, 8000, shuffleing=2500, cooling_rate=0.999).optimize()
+    opt, learning_curve, temperature_curve = SimulatedAnnealingOptimizer(65, ts, 8000, shuffleing=2500, cooling_duration=0.618).optimize()
     print("Score: {}".format(opt.make_span()))
 
     test_v2 = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 1)
@@ -501,7 +501,7 @@ def main(argv):
 
     plt.figure()
     plt.plot(range(len(learning_curve)), learning_curve)
-    plt.plot(range(len(learning_curve)), temperature_curve)
+    plt.plot(range(len(learning_curve)), [10*x for x in temperature_curve])
     plt.show()
 
     # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
