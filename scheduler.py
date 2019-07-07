@@ -240,7 +240,6 @@ class SimulatedAnnealingOptimizer:
         init_T: float,
         ts: TopologicalSort,
         maxSteps: int,
-        shuffleing: int = 333,
         logging: str = "progress",
         colored_log = True,
         cooling_duration: float = 0.95
@@ -250,7 +249,6 @@ class SimulatedAnnealingOptimizer:
         self.currentTS = ts
         self.currentMakeSpan = ts.make_span()
         self.max_steps = maxSteps
-        self.shuffleing = shuffleing
         
         self.cooling_rate = init_T / (cooling_duration * maxSteps)
         self.colored_log = colored_log
@@ -304,7 +302,7 @@ class SimulatedAnnealingOptimizer:
 
     # ========================================
 
-    def shuffle(self, steps: int):
+    def shuffle(self, steps: int = 1500):
         """
         Creates a random topological sort by applying random swops
         """
@@ -312,6 +310,7 @@ class SimulatedAnnealingOptimizer:
             self.currentTS = self.currentTS.random_neighbor()
         self.currentMakeSpan = self.currentTS.make_span()
         self.log("[shuffle]")
+        return self.currentTS
 
     def next(self):
         rn = self.currentTS.random_neighbor()
@@ -338,7 +337,6 @@ class SimulatedAnnealingOptimizer:
         self.step += 1
 
     def optimize(self):
-        self.shuffle(self.shuffleing)
         while self.step <= self.max_steps:
             self.next()
             self.print_progress_bar()
@@ -497,7 +495,9 @@ def main(argv):
     
 
     #print("Score: {}".format(ts.make_span()))
-    opt, learning_curve, temperature_curve = SimulatedAnnealingOptimizer(65, ts, 8000, shuffleing=2500, cooling_duration=0.618).optimize()
+    optimizer = SimulatedAnnealingOptimizer(65, ts, 8000, cooling_duration=0.5)
+    ts_after_shuffeling = optimizer.shuffle(2500)
+    opt, learning_curve, temperature_curve = optimizer.optimize()
     print("Score: {}".format(opt.make_span()))
 
     test_v2 = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 1)
