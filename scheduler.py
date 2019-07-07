@@ -473,35 +473,21 @@ def main(argv):
     #ts = TopologicalSort.read_from_file('test_data1.txt')
     ts = TopologicalSort.read_from_file(argv[0])
     
-    #print(ts.opList)
-    #print(ts.get_schedule().scheduleDict)
-    #print(ts.make_span())
-
-    #test_v = Visualizator(ts.get_schedule().scheduleDict, ts.make_span(), 1)
-    #test_v.plot()
-
-    # print(ts.get_schedule().log())
-    
-    #print("Score: {}".format(ts.make_span()))
-    #opt = HillClimbingOptimizer.optimize(ts)
-    #print(opt)
-    #print("Score: {}".format(opt.make_span()))
-    
-    #opt_v = Visualizator(opt.get_schedule().scheduleDict, opt.make_span(), 2)
-    #opt_v.plot()
-
-    test_v1 = Visualizator(ts.get_schedule().scheduleDict, ts.make_span(), 0)
-    test_v1.plot()
-    
+    v_initial = Visualizator(ts.get_schedule().scheduleDict, ts.make_span(), 0)
+    v_initial.plot()  
 
     #print("Score: {}".format(ts.make_span()))
     optimizer = SimulatedAnnealingOptimizer(65, ts, 8000, cooling_duration=0.5)
     ts_after_shuffeling = optimizer.shuffle(2500)
     opt, learning_curve, temperature_curve = optimizer.optimize()
     print("Score: {}".format(opt.make_span()))
-
-    test_v2 = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 1)
-    test_v2.plot()
+    
+    v_after_shuffeling = Visualizator(ts_after_shuffeling.get_schedule().scheduleDict, ts.make_span(), 1)
+    v_after_shuffeling.plot()
+    ts_after_shuffeling
+    
+    v_opt = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 2)
+    v_opt.plot()
     
     bp = ButtonDisplayer("./image")
     bp.display(learning_curve,temperature_curve) #not elegant, but works :(
