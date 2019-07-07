@@ -452,12 +452,19 @@ class ButtonDisplayer:
         self.fig.canvas.draw_idle()
         
             
-    def display(self):
+    def display(self,learning_curve,temperature_curve):
         #plt.connect('button_press_event', self.click_button)
         current_image = plt.imread(self.image_list[self.index])
         self.image_axes.imshow(current_image)
         self.button_axes = Button(ax = self.button_axes, label = "next iteration")
         self.button_axes.on_clicked(self.click_button)
+        self.image_axes.axes.get_yaxis().set_visible(False)
+        self.image_axes.axes.get_xaxis().set_visible(False)
+        #plt.show()
+        
+        plt.figure()
+        plt.plot(range(len(learning_curve)), learning_curve)
+        plt.plot(range(len(learning_curve)), [10*x for x in temperature_curve])
         plt.show()
 
 
@@ -497,12 +504,7 @@ def main(argv):
     test_v2.plot()
     
     bp = ButtonDisplayer("./image")
-    bp.display()
-
-    plt.figure()
-    plt.plot(range(len(learning_curve)), learning_curve)
-    plt.plot(range(len(learning_curve)), [10*x for x in temperature_curve])
-    plt.show()
+    bp.display(learning_curve,temperature_curve) #not elegant, but works :(
 
     # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
     
