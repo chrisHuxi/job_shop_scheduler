@@ -11,6 +11,7 @@ after processing you will get images of scheduling before optimizing and after o
 
 ![](https://github.com/chrisHuxi/job_shop_scheduler/blob/master/image/0.png)
 ![](https://github.com/chrisHuxi/job_shop_scheduler/blob/master/image/1.png)
+![](https://github.com/chrisHuxi/job_shop_scheduler/blob/master/image/2.png)
  
 ## useful information:
 * [task description](https://iccl.inf.tu-dresden.de/w/images/4/41/PSSAI_Practical_Assignment_2019.pdf)
