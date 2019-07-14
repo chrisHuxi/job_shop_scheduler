@@ -3,27 +3,6 @@ from random import randint, random
 from math import exp
 from typing import List, Optional, Dict
 
-class HillClimbingOptimizer():
-    @staticmethod
-    def next(ts: TopologicalSort) -> Optional[TopologicalSort]:
-        n = ts.neighborhood()
-        return min(
-            (x for x in n),
-            default=None,
-            key=lambda y: y.make_span()
-        )
-
-    @staticmethod
-    def optimize(ts: TopologicalSort):
-        current_ts = ts
-        while True:
-            next_ts = HillClimbingOptimizer.next(current_ts)
-            # Stop routine if there is no neighbor or if neighbor is worse then current schedule/topologicalSort
-            if (next_ts == None) or next_ts.make_span() >= current_ts.make_span():
-                return current_ts
-            else:
-                current_ts = next_ts
-
 class SimulatedAnnealingOptimizer:
     def __init__(
         self,
@@ -32,7 +11,7 @@ class SimulatedAnnealingOptimizer:
         maxSteps: int,
         logging: str = "progress",
         colored_log = True,
-        cooling_duration: float = 0.95
+        cooling_duration: float = 0.5 
     ):
         self.step = 0
         self.T = init_T
@@ -82,9 +61,9 @@ class SimulatedAnnealingOptimizer:
         self.log_colorful(label, "\033[0m")
 
     def print_progress_bar(self):
-
+        steps_per_progress_char = max(int(self.max_steps/100), 1)
         if self.logging >= 1 and \
-            (self.step % int(self.max_steps/100) == 0): # Only redraw progressbar if its necessary => faster!
+            (self.step % steps_per_progress_char == 0): # Only redraw progressbar if its necessary => faster!
             progress = int(100.0*self.step / self.max_steps)
             print(
                 "\r[{}>{}] {}".format('=' * progress, ' ' * (100-progress), self.currentMakeSpan),

@@ -27,6 +27,7 @@ class Operation:
 
 
 class TimeSpan:
+    "Encodes a time interval where the operations are executed in a specific schedule"
     def __init__(self, start: int, end: int, operation: Operation):
         self.start = start
         self.end = end
@@ -77,6 +78,10 @@ class TimeSpanList:
         return [x for x in self.deque if x.get_machine() == machine]
 
 class TopologicalSort:
+    """
+    Since the constraints of a schedule can be represented as a directed acyclic graph
+    it can also be represented as a topological sort which is simply not more than a list of all operations.
+    """
 
     # each row is job
     # each colum is (machine,time)
@@ -90,7 +95,6 @@ class TopologicalSort:
             operation_list = []
             for i in range(0,len(lines[1:])):
                 time_list = re.split(r'[\s]+',lines[i+1].strip())
-                print(time_list)
                 for j in range(0,len(time_list),2):
                     operation_list.append(Operation(i, int(j/2), int(time_list[j]), int(time_list[j+1])))
         return TopologicalSort(machine_number, operation_list)
@@ -119,6 +123,7 @@ class TopologicalSort:
         return len(self.opList)+1
 
     def is_valid_swop(self, idx1: int, idx2: int) -> bool:
+        """Checks if a swop (denoted by the indices of the according operations) would be valid"""
         op1 = self.opList[idx1]
         op2 = self.opList[idx2]
 
@@ -133,44 +138,19 @@ class TopologicalSort:
                 idx1 > prev_job_op2_idx and idx1 < next_job_op2_idx
 
     def swop(self, idx1: int, idx2: int):
+        """
+        Computes a new topological sort by swopping two operations within the current one.
+        WARNING: This method is not checking if the swop is valid!
+        """
         newOpList = self.opList.copy()
         h = newOpList[idx1]
         newOpList[idx1] = newOpList[idx2]
         newOpList[idx2] = h
         return TopologicalSort(self.machine_number, newOpList)
 
-    def neighborhood(self):
-        swops = [
-            (i,j)
-            for i in range(len(self))
-            for j in range(len(self))
-            if i < j
-        ]
-
-        return [
-            self.swop(i,j)
-            for i,j in swops
-            if self.is_valid_swop(i,j)
-        ]
-
-    def random_neighbor_really_slow(self):
-        n = self.neighborhood()
-        return n[randint(0,len(n)-1)]
-
-    def random_neighbor_slow(self):
-        valid_swops = [
-            (i,j)
-            for i in range(len(self))
-            for j in range(len(self))
-            if i < j
-            if self.is_valid_swop(i,j)
-        ]
-
-        swop = valid_swops[randint(0,len(valid_swops)-1)]
-        return self.swop(swop[0], swop[1])
-
     # Faster implementation to pick a random neighbor
     def random_neighbor(self):
+        """Returns a single random neighbor"""
         while True:
             i = randint(0,len(self)-1)
             j = randint(0,len(self)-1)
@@ -178,6 +158,7 @@ class TopologicalSort:
                 return self.swop(i, j)
 
     def get_schedule(self):
+        """Computes a schedule from the topological sort in a greedy way"""
         #adding all new elements at start
         time_span_list = TimeSpanList()
 

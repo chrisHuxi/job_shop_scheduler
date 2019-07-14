@@ -5,10 +5,13 @@ from matplotlib.widgets import Button,RadioButtons
 import matplotlib.pyplot as plt
 import numpy as np
 import glob
-import sys
+
 
     
 class Visualizator():
+    """
+    Handles all task related to plotting the schedules and the learning curve
+    """
     def __init__(self, scheduleDict, total_time, iteration_index):
         self.scheduleDict = scheduleDict
         self.total_time = total_time
@@ -125,32 +128,3 @@ class ButtonDisplayer:
 
 
 
-    
-def main(argv):
-    print("test file: " + argv[0])
-    #ts = TopologicalSort.read_from_file('test_data1.txt')
-    ts = TopologicalSort.read_from_file(argv[0])
-    
-    v_initial = Visualizator(ts.get_schedule().scheduleDict, ts.make_span(), 0)
-    v_initial.plot()  
-
-    #print("Score: {}".format(ts.make_span()))
-    optimizer = SimulatedAnnealingOptimizer(65, ts, 800, cooling_duration=0.5)
-    ts_after_shuffeling = optimizer.shuffle(250)
-    opt, learning_curve, temperature_curve = optimizer.optimize()
-    print("Score: {}".format(opt.make_span()))
-    
-    v_after_shuffeling = Visualizator(ts_after_shuffeling.get_schedule().scheduleDict, ts.make_span(), 1)
-    v_after_shuffeling.plot()
-    ts_after_shuffeling
-    
-    v_opt = Visualizator(opt.get_schedule().scheduleDict, ts.make_span(), 2)
-    v_opt.plot()
-    
-    bp = ButtonDisplayer("./image")
-    bp.display(learning_curve,temperature_curve) #not elegant, but works :(
-
-    # Visualizator(opt.get_schedule().scheduleDict, ts.make_span()).plot()
-    
-if __name__ == "__main__":
-    main(sys.argv[1:])
